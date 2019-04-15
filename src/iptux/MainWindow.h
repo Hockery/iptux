@@ -21,11 +21,13 @@
 #include "iptux/Event.h"
 #include "iptux/UiCoreThread.h"
 
-namespace iptux {
+namespace iptux
+{
 
 class StatusIcon;
 
-enum class ActiveWindowType {
+enum class ActiveWindowType
+{
   MAIN,
   PEER,
   GROUP,
@@ -37,12 +39,14 @@ enum class ActiveWindowType {
  * 所以无须加锁访问，若有例外，请于注释中说明，否则应当bug处理.\n
  * 若此特性不可被如此利用,请报告bug.
  */
-class MainWindow {
- public:
-  MainWindow(GtkApplication* app, UiCoreThread& coreThread);
+class MainWindow
+{
+public:
+  MainWindow(GtkApplication *app, UiCoreThread &coreThread);
   ~MainWindow();
 
-  GtkWidget* getWindow();
+  GtkWidget *getWindow();
+  GtkApplication *getApp();
 
   void CreateWindow();
   void AlterWindowMode();
@@ -53,12 +57,12 @@ class MainWindow {
   void DelItemFromPaltree(in_addr_t ipv4);
   void ClearAllItemFromPaltree();
   void MakeItemBlinking(GroupInfo *grpinf, bool blinking);
-  void setActiveWindow(ActiveWindowType t, void* activeWindow);
-  void clearActiveWindow(void* activeWindow);
+  void setActiveWindow(ActiveWindowType t, void *activeWindow);
+  void clearActiveWindow(void *activeWindow);
 
   void OpenTransWindow();
   //void UpdateItemToTransTree(GData **para);
-  void UpdateItemToTransTree(const TransFileModel& para);
+  void UpdateItemToTransTree(const TransFileModel &para);
   bool isTransmissionActive() const;
 
   UiProgramData &GetProgramData() { return progdt; }
@@ -67,29 +71,29 @@ class MainWindow {
 
   void SetStatusIcon(StatusIcon *statusIcon) { this->statusIcon = statusIcon; }
 
-  void processEvent(const Event& event);
+  void processEvent(const Event &event);
 
- private:
-  GtkApplication* app;
-  UiCoreThread& coreThread;
-  GtkWidget* window;
-  GtkWidget* transWindow;
+private:
+  GtkApplication *app;
+  UiCoreThread &coreThread;
+  GtkWidget *window;
+  GtkWidget *transWindow;
 
   UiProgramData &progdt;
   IptuxConfig &config;
   StatusIcon *statusIcon;
 
-  GData *widset;  //窗体集
-  GData *mdlset;  //数据model集
-  GList *tmdllist;       // model链表，用于构建model循环结构
-  GtkAccelGroup *accel;  //快捷键集组
-  guint timerid;         // UI更新定时器ID
+  GData *widset;        //窗体集
+  GData *mdlset;        //数据model集
+  GList *tmdllist;      // model链表，用于构建model循环结构
+  GtkAccelGroup *accel; //快捷键集组
+  guint timerid;        // UI更新定时器ID
   WindowConfig windowConfig;
 
   ActiveWindowType activeWindowType;
-  void* activeWindow;
+  void *activeWindow;
 
- private:
+private:
   void InitSublayer();
   void ClearSublayer();
 
@@ -117,9 +121,9 @@ class MainWindow {
   static GtkWidget *CreatePaltreePopupMenu(GroupInfo *grpinf);
   static void FillPalInfoToBuffer(GtkTextBuffer *buffer, PalInfo *pal);
   void InitThemeSublayerData();
-  void processEventInMainThread(Event* event);
+  void processEventInMainThread(Event *event);
 
- private:
+private:
   //回调处理部分
   static gboolean processEventCallback(gpointer data);
   static gboolean UpdateUI(MainWindow *mwin);
@@ -163,18 +167,18 @@ class MainWindow {
   static void PanedDivideChanged(GtkWidget *paned, GParamSpec *pspec,
                                  MainWindow *self);
   static gboolean onDeleteEvent(MainWindow *self);
-  static void onRefresh (void *, void *, MainWindow& self);
-  static void onDetect (void *, void *, MainWindow& self);
-  static void onFind (void *, void *, MainWindow& self);
-  static void onAbout (void *, void *, MainWindow& self);
-  static void onClearChatHistory (void *, void *, MainWindow& self);
-  static void onInsertPicture (void *, void *, MainWindow& self);
-  static void onSortType (GSimpleAction *action, GVariant* value, MainWindow& self);
-  static void onSortBy (GSimpleAction *action, GVariant* value, MainWindow& self);
-  static void onActive(MainWindow& self);
+  static void onRefresh(void *, void *, MainWindow &self);
+  static void onDetect(void *, void *, MainWindow &self);
+  static void onFind(void *, void *, MainWindow &self);
+  static void onAbout(void *, void *, MainWindow &self);
+  static void onClearChatHistory(void *, void *, MainWindow &self);
+  static void onInsertPicture(void *, void *, MainWindow &self);
+  static void onSortType(GSimpleAction *action, GVariant *value, MainWindow &self);
+  static void onSortBy(GSimpleAction *action, GVariant *value, MainWindow &self);
+  static void onActive(MainWindow &self);
   static gboolean onNewPalOnlineEvent(gpointer data);
 };
 
-}  // namespace iptux
+} // namespace iptux
 
 #endif

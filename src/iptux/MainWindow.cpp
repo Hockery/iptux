@@ -36,15 +36,15 @@
 
 using namespace std;
 
-namespace iptux {
+namespace iptux
+{
 
-static gchar* palInfo2HintMarkup(const PalInfo *pal);
-
+static gchar *palInfo2HintMarkup(const PalInfo *pal);
 
 /**
  * 类构造函数.
  */
-MainWindow::MainWindow(GtkApplication* app, UiCoreThread& coreThread)
+MainWindow::MainWindow(GtkApplication *app, UiCoreThread &coreThread)
     : app(app),
       coreThread(coreThread),
       window(nullptr),
@@ -55,7 +55,8 @@ MainWindow::MainWindow(GtkApplication* app, UiCoreThread& coreThread)
       tmdllist(NULL),
       accel(NULL),
       timerid(0),
-      windowConfig(250, 510, "main_window") {
+      windowConfig(250, 510, "main_window")
+{
   activeWindowType = ActiveWindowType ::OTHERS;
   activeWindow = nullptr;
   transWindow = nullptr;
@@ -66,23 +67,30 @@ MainWindow::MainWindow(GtkApplication* app, UiCoreThread& coreThread)
 /**
  * 类析构函数.
  */
-MainWindow::~MainWindow() {
+MainWindow::~MainWindow()
+{
   ClearSublayer();
 }
 
-GtkWidget* MainWindow::getWindow() {
+GtkWidget *MainWindow::getWindow()
+{
   return window;
 }
+GtkApplication *MainWindow::getApp()
+{
+  return app;
+}
 
-typedef void (* GActionCallback) (GSimpleAction *action,
-                                  GVariant      *parameter,
-                                  gpointer       user_data) ;
-#define	G_ACTION_CALLBACK(f)			 ((GActionCallback) (f))
+typedef void (*GActionCallback)(GSimpleAction *action,
+                                GVariant *parameter,
+                                gpointer user_data);
+#define G_ACTION_CALLBACK(f) ((GActionCallback)(f))
 
 /**
  * 创建程序主窗口入口.
  */
-void MainWindow::CreateWindow() {
+void MainWindow::CreateWindow()
+{
   GtkWidget *widget;
 
   InitSublayer();
@@ -91,31 +99,30 @@ void MainWindow::CreateWindow() {
   window = CreateMainWindow();
   g_object_set_data(G_OBJECT(window), "iptux-config", &config);
   g_object_set_data_full(G_OBJECT(window), "trans-model", transModelNew(),
-                           GDestroyNotify(g_object_unref));
+                         GDestroyNotify(g_object_unref));
 
   gtk_container_add(GTK_CONTAINER(window), CreateAllArea());
   gtk_widget_show_all(window);
 
-
   GActionEntry win_entries[] = {
-      { "refresh", G_ACTION_CALLBACK(onRefresh)},
-      { "sort_type", nullptr, "s", "'ascending'", G_ACTION_CALLBACK(onSortType)},
-      { "sort_by", nullptr, "s", "'nickname'", G_ACTION_CALLBACK(onSortBy)},
-      { "detect", G_ACTION_CALLBACK(onDetect)},
-      { "find", G_ACTION_CALLBACK(onFind)},
-      { "about", G_ACTION_CALLBACK(onAbout)},
-      { "clear_chat_history", G_ACTION_CALLBACK(onClearChatHistory)},
-      { "insert_picture", G_ACTION_CALLBACK(onInsertPicture)},
-      { "trans_model_changed"},
+      {"refresh", G_ACTION_CALLBACK(onRefresh)},
+      {"sort_type", nullptr, "s", "'ascending'", G_ACTION_CALLBACK(onSortType)},
+      {"sort_by", nullptr, "s", "'nickname'", G_ACTION_CALLBACK(onSortBy)},
+      {"detect", G_ACTION_CALLBACK(onDetect)},
+      {"find", G_ACTION_CALLBACK(onFind)},
+      {"about", G_ACTION_CALLBACK(onAbout)},
+      {"clear_chat_history", G_ACTION_CALLBACK(onClearChatHistory)},
+      {"insert_picture", G_ACTION_CALLBACK(onInsertPicture)},
+      {"trans_model_changed"},
   };
 
   add_accelerator(app, "win.refresh", "F5");
   add_accelerator(app, "win.detect", "<Primary>D");
   add_accelerator(app, "win.find", "<Primary>F");
 
-  g_action_map_add_action_entries (G_ACTION_MAP (window),
-                                   win_entries, G_N_ELEMENTS (win_entries),
-                                   this);
+  g_action_map_add_action_entries(G_ACTION_MAP(window),
+                                  win_entries, G_N_ELEMENTS(win_entries),
+                                  this);
   /* 聚焦到好友树(paltree)区域 */
   widget = GTK_WIDGET(g_datalist_get_data(&widset, "paltree-treeview-widget"));
   gtk_widget_grab_focus(widget);
@@ -123,7 +130,8 @@ void MainWindow::CreateWindow() {
   widget = GTK_WIDGET(g_datalist_get_data(&widset, "pallist-box-widget"));
   gtk_widget_hide(widget);
 
-  if (progdt.IsAutoHidePanelAfterLogin()) {
+  if (progdt.IsAutoHidePanelAfterLogin())
+  {
     gtk_widget_hide(window);
   }
 }
@@ -131,10 +139,14 @@ void MainWindow::CreateWindow() {
 /**
  * 更改窗口显示模式.
  */
-void MainWindow::AlterWindowMode() {
-  if (gtk_widget_get_visible(window)) {
+void MainWindow::AlterWindowMode()
+{
+  if (gtk_widget_get_visible(window))
+  {
     gtk_window_iconify(GTK_WINDOW(window));
-  } else {
+  }
+  else
+  {
     gtk_window_deiconify(GTK_WINDOW(window));
   }
 }
@@ -144,7 +156,8 @@ void MainWindow::AlterWindowMode() {
  * @param ipv4 ipv4
  * @return 是否包含
  */
-bool MainWindow::PaltreeContainItem(in_addr_t ipv4) {
+bool MainWindow::PaltreeContainItem(in_addr_t ipv4)
+{
   GtkTreeModel *model;
   GtkTreeIter iter;
   GroupInfo *grpinf;
@@ -164,7 +177,8 @@ bool MainWindow::PaltreeContainItem(in_addr_t ipv4) {
  * 更新此IP地址好友在好友树(paltree)中的信息数据.
  * @param ipv4 ipv4
  */
-void MainWindow::UpdateItemToPaltree(in_addr_t ipv4) {
+void MainWindow::UpdateItemToPaltree(in_addr_t ipv4)
+{
   GtkTreeModel *model;
   GtkTreeIter parent, iter;
   GroupInfo *pgrpinf, *grpinf;
@@ -174,8 +188,7 @@ void MainWindow::UpdateItemToPaltree(in_addr_t ipv4) {
       !(grpinf = g_cthrd->GetPalRegularItem(pal)))
     return;
 
-  const char* font = progdt.font;
-
+  const char *font = progdt.font;
 
   /* 更新常规模式树 */
   model = GTK_TREE_MODEL(g_datalist_get_data(&mdlset, "regular-paltree-model"));
@@ -196,7 +209,8 @@ void MainWindow::UpdateItemToPaltree(in_addr_t ipv4) {
     gtk_tree_store_remove(GTK_TREE_STORE(model), &parent);
   else
     gtk_tree_store_remove(GTK_TREE_STORE(model), &iter);
-  if (!GroupGetPaltreeItem(model, &parent, pgrpinf)) {
+  if (!GroupGetPaltreeItem(model, &parent, pgrpinf))
+  {
     gtk_tree_store_append(GTK_TREE_STORE(model), &parent, NULL);
     palTreeModelFillFromGroupInfo(model, &parent, pgrpinf, progdt.font);
   }
@@ -216,7 +230,8 @@ void MainWindow::UpdateItemToPaltree(in_addr_t ipv4) {
  * 附加此IP地址的好友到好友树(paltree).
  * @param ipv4 ipv4
  */
-void MainWindow::AttachItemToPaltree(in_addr_t ipv4) {
+void MainWindow::AttachItemToPaltree(in_addr_t ipv4)
+{
   GtkTreeModel *model;
   GtkTreeIter parent, iter;
   GroupInfo *pgrpinf, *grpinf;
@@ -226,7 +241,7 @@ void MainWindow::AttachItemToPaltree(in_addr_t ipv4) {
       !(grpinf = g_cthrd->GetPalRegularItem(pal)))
     return;
 
-  const char* font = progdt.font;
+  const char *font = progdt.font;
 
   /* 添加到常规模式树 */
   model = GTK_TREE_MODEL(g_datalist_get_data(&mdlset, "regular-paltree-model"));
@@ -235,7 +250,8 @@ void MainWindow::AttachItemToPaltree(in_addr_t ipv4) {
   /* 添加到网段模式树 */
   model = GTK_TREE_MODEL(g_datalist_get_data(&mdlset, "segment-paltree-model"));
   pgrpinf = g_cthrd->GetPalSegmentItem(pal);
-  if (!GroupGetPaltreeItem(model, &parent, pgrpinf)) {
+  if (!GroupGetPaltreeItem(model, &parent, pgrpinf))
+  {
     gtk_tree_store_append(GTK_TREE_STORE(model), &parent, NULL);
     palTreeModelFillFromGroupInfo(model, &parent, pgrpinf, progdt.font);
   }
@@ -245,7 +261,8 @@ void MainWindow::AttachItemToPaltree(in_addr_t ipv4) {
   /* 添加到分组模式树 */
   model = GTK_TREE_MODEL(g_datalist_get_data(&mdlset, "group-paltree-model"));
   pgrpinf = g_cthrd->GetPalGroupItem(pal);
-  if (!GroupGetPaltreeItem(model, &parent, pgrpinf)) {
+  if (!GroupGetPaltreeItem(model, &parent, pgrpinf))
+  {
     gtk_tree_store_append(GTK_TREE_STORE(model), &parent, NULL);
     palTreeModelFillFromGroupInfo(model, &parent, pgrpinf, progdt.font);
   }
@@ -256,7 +273,8 @@ void MainWindow::AttachItemToPaltree(in_addr_t ipv4) {
   model =
       GTK_TREE_MODEL(g_datalist_get_data(&mdlset, "broadcast-paltree-model"));
   pgrpinf = g_cthrd->GetPalBroadcastItem(pal);
-  if (!GroupGetPaltreeItem(model, &parent, pgrpinf)) {
+  if (!GroupGetPaltreeItem(model, &parent, pgrpinf))
+  {
     gtk_tree_store_append(GTK_TREE_STORE(model), &parent, NULL);
     palTreeModelFillFromGroupInfo(model, &parent, pgrpinf, progdt.font);
   }
@@ -269,7 +287,8 @@ void MainWindow::AttachItemToPaltree(in_addr_t ipv4) {
  * 从好友树(paltree)中删除此IP地址的好友.
  * @param ipv4 ipv4
  */
-void MainWindow::DelItemFromPaltree(in_addr_t ipv4) {
+void MainWindow::DelItemFromPaltree(in_addr_t ipv4)
+{
   GtkTreeModel *model;
   GtkTreeIter parent, iter;
   GroupInfo *pgrpinf, *grpinf;
@@ -287,42 +306,49 @@ void MainWindow::DelItemFromPaltree(in_addr_t ipv4) {
   model = GTK_TREE_MODEL(g_datalist_get_data(&mdlset, "segment-paltree-model"));
   pgrpinf = g_cthrd->GetPalSegmentItem(pal);
   GroupGetPaltreeItem(model, &parent, pgrpinf);
-  if (g_slist_length(pgrpinf->member) != 1) {
+  if (g_slist_length(pgrpinf->member) != 1)
+  {
     iter = parent;
     GroupGetPaltreeItemWithParent(model, &iter, grpinf);
     gtk_tree_store_remove(GTK_TREE_STORE(model), &iter);
     groupInfo2PalTreeModel(pgrpinf, model, &parent, progdt.font);
-  } else
+  }
+  else
     gtk_tree_store_remove(GTK_TREE_STORE(model), &parent);
   /* 从分组模式树移除 */
   model = GTK_TREE_MODEL(g_datalist_get_data(&mdlset, "group-paltree-model"));
   pgrpinf = g_cthrd->GetPalGroupItem(pal);
   GroupGetPaltreeItem(model, &parent, pgrpinf);
-  if (g_slist_length(pgrpinf->member) != 1) {
+  if (g_slist_length(pgrpinf->member) != 1)
+  {
     iter = parent;
     GroupGetPaltreeItemWithParent(model, &iter, grpinf);
     gtk_tree_store_remove(GTK_TREE_STORE(model), &iter);
     groupInfo2PalTreeModel(pgrpinf, model, &parent, progdt.font);
-  } else
+  }
+  else
     gtk_tree_store_remove(GTK_TREE_STORE(model), &parent);
   /* 从广播模式树移除 */
   model =
       GTK_TREE_MODEL(g_datalist_get_data(&mdlset, "broadcast-paltree-model"));
   pgrpinf = g_cthrd->GetPalBroadcastItem(pal);
   GroupGetPaltreeItem(model, &parent, pgrpinf);
-  if (g_slist_length(pgrpinf->member) != 1) {
+  if (g_slist_length(pgrpinf->member) != 1)
+  {
     iter = parent;
     GroupGetPaltreeItemWithParent(model, &iter, grpinf);
     gtk_tree_store_remove(GTK_TREE_STORE(model), &iter);
     groupInfo2PalTreeModel(pgrpinf, model, &parent, progdt.font);
-  } else
+  }
+  else
     gtk_tree_store_remove(GTK_TREE_STORE(model), &parent);
 }
 
 /**
  * 从好友树(paltree)中删除所有好友数据.
  */
-void MainWindow::ClearAllItemFromPaltree() {
+void MainWindow::ClearAllItemFromPaltree()
+{
   GtkTreeModel *model;
 
   model = GTK_TREE_MODEL(g_datalist_get_data(&mdlset, "regular-paltree-model"));
@@ -342,75 +368,80 @@ void MainWindow::ClearAllItemFromPaltree() {
  * @param blinking 是否继续闪烁
  * @note 如果我猜得没错，调用此函数的环境一定已经对(grpinf)加锁了
  */
-void MainWindow::MakeItemBlinking(GroupInfo *grpinf, bool blinking) {
+void MainWindow::MakeItemBlinking(GroupInfo *grpinf, bool blinking)
+{
   GtkTreeModel *model;
   GtkTreeIter iter;
   GroupInfo *pgrpinf;
 
   /* 成员为空表明此项已经不存在model中，也就没必要再处理它了 */
-  if (!grpinf->member) return;
+  if (!grpinf->member)
+    return;
 
   /* 闪烁项 */
-  switch (grpinf->type) {
-    case GROUP_BELONG_TYPE_REGULAR:
-      /* 闪烁常规模式树 */
-      model =
-          GTK_TREE_MODEL(g_datalist_get_data(&mdlset, "regular-paltree-model"));
-      GroupGetPaltreeItem(model, &iter, grpinf);
-      BlinkGroupItemToPaltree(model, &iter, blinking);
-      /* 闪烁网段模式树 */
-      model =
-          GTK_TREE_MODEL(g_datalist_get_data(&mdlset, "segment-paltree-model"));
-      pgrpinf = g_cthrd->GetPalSegmentItem((PalInfo *)grpinf->member->data);
-      GroupGetPaltreeItem(model, &iter, pgrpinf);
-      GroupGetPaltreeItemWithParent(model, &iter, grpinf);
-      BlinkGroupItemToPaltree(model, &iter, blinking);
-      /* 闪烁分组模式树 */
-      model =
-          GTK_TREE_MODEL(g_datalist_get_data(&mdlset, "group-paltree-model"));
-      pgrpinf = g_cthrd->GetPalGroupItem((PalInfo *)grpinf->member->data);
-      GroupGetPaltreeItem(model, &iter, pgrpinf);
-      GroupGetPaltreeItemWithParent(model, &iter, grpinf);
-      BlinkGroupItemToPaltree(model, &iter, blinking);
-      /* 闪烁广播模式树 */
-      model = GTK_TREE_MODEL(
-          g_datalist_get_data(&mdlset, "broadcast-paltree-model"));
-      pgrpinf = g_cthrd->GetPalBroadcastItem((PalInfo *)grpinf->member->data);
-      GroupGetPaltreeItem(model, &iter, pgrpinf);
-      GroupGetPaltreeItemWithParent(model, &iter, grpinf);
-      BlinkGroupItemToPaltree(model, &iter, blinking);
-      break;
-    case GROUP_BELONG_TYPE_SEGMENT:
-      /* 闪烁网段模式树 */
-      model =
-          GTK_TREE_MODEL(g_datalist_get_data(&mdlset, "segment-paltree-model"));
-      GroupGetPaltreeItem(model, &iter, grpinf);
-      BlinkGroupItemToPaltree(model, &iter, blinking);
-      break;
-    case GROUP_BELONG_TYPE_GROUP:
-      /* 闪烁分组模式树 */
-      model =
-          GTK_TREE_MODEL(g_datalist_get_data(&mdlset, "group-paltree-model"));
-      GroupGetPaltreeItem(model, &iter, grpinf);
-      BlinkGroupItemToPaltree(model, &iter, blinking);
-      break;
-    case GROUP_BELONG_TYPE_BROADCAST:
-      /* 闪烁广播模式树 */
-      model = GTK_TREE_MODEL(
-          g_datalist_get_data(&mdlset, "broadcast-paltree-model"));
-      GroupGetPaltreeItem(model, &iter, grpinf);
-      BlinkGroupItemToPaltree(model, &iter, blinking);
-      break;
-    default:
-      break;
+  switch (grpinf->type)
+  {
+  case GROUP_BELONG_TYPE_REGULAR:
+    /* 闪烁常规模式树 */
+    model =
+        GTK_TREE_MODEL(g_datalist_get_data(&mdlset, "regular-paltree-model"));
+    GroupGetPaltreeItem(model, &iter, grpinf);
+    BlinkGroupItemToPaltree(model, &iter, blinking);
+    /* 闪烁网段模式树 */
+    model =
+        GTK_TREE_MODEL(g_datalist_get_data(&mdlset, "segment-paltree-model"));
+    pgrpinf = g_cthrd->GetPalSegmentItem((PalInfo *)grpinf->member->data);
+    GroupGetPaltreeItem(model, &iter, pgrpinf);
+    GroupGetPaltreeItemWithParent(model, &iter, grpinf);
+    BlinkGroupItemToPaltree(model, &iter, blinking);
+    /* 闪烁分组模式树 */
+    model =
+        GTK_TREE_MODEL(g_datalist_get_data(&mdlset, "group-paltree-model"));
+    pgrpinf = g_cthrd->GetPalGroupItem((PalInfo *)grpinf->member->data);
+    GroupGetPaltreeItem(model, &iter, pgrpinf);
+    GroupGetPaltreeItemWithParent(model, &iter, grpinf);
+    BlinkGroupItemToPaltree(model, &iter, blinking);
+    /* 闪烁广播模式树 */
+    model = GTK_TREE_MODEL(
+        g_datalist_get_data(&mdlset, "broadcast-paltree-model"));
+    pgrpinf = g_cthrd->GetPalBroadcastItem((PalInfo *)grpinf->member->data);
+    GroupGetPaltreeItem(model, &iter, pgrpinf);
+    GroupGetPaltreeItemWithParent(model, &iter, grpinf);
+    BlinkGroupItemToPaltree(model, &iter, blinking);
+    break;
+  case GROUP_BELONG_TYPE_SEGMENT:
+    /* 闪烁网段模式树 */
+    model =
+        GTK_TREE_MODEL(g_datalist_get_data(&mdlset, "segment-paltree-model"));
+    GroupGetPaltreeItem(model, &iter, grpinf);
+    BlinkGroupItemToPaltree(model, &iter, blinking);
+    break;
+  case GROUP_BELONG_TYPE_GROUP:
+    /* 闪烁分组模式树 */
+    model =
+        GTK_TREE_MODEL(g_datalist_get_data(&mdlset, "group-paltree-model"));
+    GroupGetPaltreeItem(model, &iter, grpinf);
+    BlinkGroupItemToPaltree(model, &iter, blinking);
+    break;
+  case GROUP_BELONG_TYPE_BROADCAST:
+    /* 闪烁广播模式树 */
+    model = GTK_TREE_MODEL(
+        g_datalist_get_data(&mdlset, "broadcast-paltree-model"));
+    GroupGetPaltreeItem(model, &iter, grpinf);
+    BlinkGroupItemToPaltree(model, &iter, blinking);
+    break;
+  default:
+    break;
   }
 }
 
 /**
  * 打开文件传输窗口.
  */
-void MainWindow::OpenTransWindow() {
-  if(transWindow == nullptr) {
+void MainWindow::OpenTransWindow()
+{
+  if (transWindow == nullptr)
+  {
     transWindow = GTK_WIDGET(trans_window_new(GTK_WINDOW(window)));
     gtk_widget_show_all(transWindow);
     gtk_widget_hide(transWindow);
@@ -418,7 +449,8 @@ void MainWindow::OpenTransWindow() {
   gtk_window_present(GTK_WINDOW(transWindow));
 }
 
-void MainWindow::UpdateItemToTransTree(const TransFileModel& para) {
+void MainWindow::UpdateItemToTransTree(const TransFileModel &para)
+{
   GtkTreeModel *model;
   GtkTreeIter iter;
   gpointer data;
@@ -427,16 +459,20 @@ void MainWindow::UpdateItemToTransTree(const TransFileModel& para) {
   data = NULL;
   model = GTK_TREE_MODEL(g_object_get_data(G_OBJECT(window), "trans-model"));
   bool found = false;
-  if (gtk_tree_model_get_iter_first(model, &iter)) {
-    do {
+  if (gtk_tree_model_get_iter_first(model, &iter))
+  {
+    do
+    {
       gtk_tree_model_get(model, &iter, TransModelColumn::PARA, &data, -1);
-      if (gpointer(&para) == data) {
+      if (gpointer(&para) == data)
+      {
         found = true;
         break;
       }
     } while (gtk_tree_model_iter_next(model, &iter));
   }
-  if (!found) {
+  if (!found)
+  {
     gtk_list_store_append(GTK_LIST_STORE(model), &iter);
     gtk_list_store_set(GTK_LIST_STORE(model), &iter, TransModelColumn::PARA, &para, -1);
   }
@@ -445,7 +481,8 @@ void MainWindow::UpdateItemToTransTree(const TransFileModel& para) {
    * @note 鉴于参数值(*para)的原地址有可能会被重用， 所以当("data"==null)
    * 时应该清空参数指针值，以防止其他后来项误认此项为自己的大本营.
    */
-  if (!para.getData()) {
+  if (!para.getData())
+  {
     gtk_list_store_set(GTK_LIST_STORE(model), &iter, TransModelColumn::PARA, NULL, -1);
   }
 
@@ -454,25 +491,28 @@ void MainWindow::UpdateItemToTransTree(const TransFileModel& para) {
   g_action_group_activate_action(
       G_ACTION_GROUP(window),
       "trans_model_changed",
-      nullptr
-  );
+      nullptr);
 }
 
 /**
  * 查询此刻是否存在活动的文件传输.
  * @return 活动与否
  */
-bool MainWindow::isTransmissionActive() const {
+bool MainWindow::isTransmissionActive() const
+{
   GtkTreeModel *model;
   GtkTreeIter iter;
   gpointer data;
 
   data = nullptr;
   model = GTK_TREE_MODEL(g_object_get_data(G_OBJECT(window), "trans-model"));
-  if (gtk_tree_model_get_iter_first(model, &iter)) {
-    do {
+  if (gtk_tree_model_get_iter_first(model, &iter))
+  {
+    do
+    {
       gtk_tree_model_get(model, &iter, TransModelColumn::PARA, &data, -1);
-      if (data) break;
+      if (data)
+        break;
     } while (gtk_tree_model_iter_next(model, &iter));
   }
 
@@ -482,7 +522,8 @@ bool MainWindow::isTransmissionActive() const {
 /**
  * 初始化底层数据.
  */
-void MainWindow::InitSublayer() {
+void MainWindow::InitSublayer()
+{
   GtkTreeModel *model;
 
   g_datalist_init(&widset);
@@ -516,19 +557,23 @@ void MainWindow::InitSublayer() {
 /**
  * 清空底层数据.
  */
-void MainWindow::ClearSublayer() {
+void MainWindow::ClearSublayer()
+{
   g_datalist_clear(&widset);
   g_datalist_clear(&mdlset);
   g_list_free(tmdllist);
-  if (accel) g_object_unref(accel);
-  if (timerid > 0) g_source_remove(timerid);
+  if (accel)
+    g_object_unref(accel);
+  if (timerid > 0)
+    g_source_remove(timerid);
 }
 
 /**
  * 创建主窗口.
  * @return 主窗口
  */
-GtkWidget *MainWindow::CreateMainWindow() {
+GtkWidget *MainWindow::CreateMainWindow()
+{
   GdkGeometry geometry = {50,
                           200,
                           G_MAXINT,
@@ -561,12 +606,12 @@ GtkWidget *MainWindow::CreateMainWindow() {
   return window;
 }
 
-
 /**
  * 创建所有区域.
  * @return 主窗体
  */
-GtkWidget *MainWindow::CreateAllArea() {
+GtkWidget *MainWindow::CreateAllArea()
+{
   GtkWidget *box, *paned;
 
   box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
@@ -592,7 +637,8 @@ GtkWidget *MainWindow::CreateAllArea() {
  * 创建工具条.
  * @return 工具条
  */
-GtkWidget *MainWindow::CreateToolBar() {
+GtkWidget *MainWindow::CreateToolBar()
+{
   GtkWidget *toolbar;
   GtkToolItem *toolitem;
   GtkWidget *widget;
@@ -602,9 +648,8 @@ GtkWidget *MainWindow::CreateToolBar() {
   gtk_toolbar_set_style(GTK_TOOLBAR(toolbar), GTK_TOOLBAR_ICONS);
 
   toolitem = gtk_tool_button_new(
-    gtk_image_new_from_icon_name("go-previous-symbolic", GTK_ICON_SIZE_SMALL_TOOLBAR),
-    "Go previous"
-  );
+      gtk_image_new_from_icon_name("go-previous-symbolic", GTK_ICON_SIZE_SMALL_TOOLBAR),
+      "Go previous");
   gtk_toolbar_insert(GTK_TOOLBAR(toolbar), toolitem, -1);
   g_signal_connect_swapped(toolitem, "clicked", G_CALLBACK(GoPrevTreeModel),
                            this);
@@ -617,9 +662,8 @@ GtkWidget *MainWindow::CreateToolBar() {
   g_datalist_set_data(&widset, "online-label-widget", widget);
 
   toolitem = gtk_tool_button_new(
-    gtk_image_new_from_icon_name("go-next-symbolic", GTK_ICON_SIZE_SMALL_TOOLBAR),
-    "Go next"
-  );
+      gtk_image_new_from_icon_name("go-next-symbolic", GTK_ICON_SIZE_SMALL_TOOLBAR),
+      "Go next");
   gtk_toolbar_insert(GTK_TOOLBAR(toolbar), toolitem, -1);
   g_signal_connect_swapped(toolitem, "clicked", G_CALLBACK(GoNextTreeModel),
                            this);
@@ -631,7 +675,8 @@ GtkWidget *MainWindow::CreateToolBar() {
  * 创建好友树区域.
  * @return 主窗体
  */
-GtkWidget *MainWindow::CreatePaltreeArea() {
+GtkWidget *MainWindow::CreatePaltreeArea()
+{
   GtkWidget *sw;
   GtkWidget *widget;
   GtkTreeModel *model;
@@ -655,7 +700,8 @@ GtkWidget *MainWindow::CreatePaltreeArea() {
  * 创建好友清单区域.
  * @return 主窗体
  */
-GtkWidget *MainWindow::CreatePallistArea() {
+GtkWidget *MainWindow::CreatePallistArea()
+{
   GtkWidget *box, *hbox;
   GtkWidget *sw, *button, *widget;
   GtkTreeModel *model;
@@ -691,7 +737,7 @@ GtkWidget *MainWindow::CreatePallistArea() {
   widget = gtk_entry_new();
   gtk_entry_set_activates_default(GTK_ENTRY(widget), TRUE);
   gtk_entry_set_icon_from_icon_name(GTK_ENTRY(widget), GTK_ENTRY_ICON_SECONDARY,
-                                "edit-find-symbolic");
+                                    "edit-find-symbolic");
   gtk_widget_add_events(widget, GDK_KEY_PRESS_MASK);
   g_object_set(widget, "has-tooltip", TRUE, NULL);
   gtk_box_pack_start(GTK_BOX(hbox), widget, TRUE, TRUE, 0);
@@ -713,7 +759,8 @@ GtkWidget *MainWindow::CreatePallistArea() {
  * @note 鉴于好友清单(pallist)常年保持隐藏状态，所以请不要有事没事就往
  * 此model中填充数据，好友清单也无须与好友最新状态保持同步.
  */
-GtkTreeModel *MainWindow::CreatePallistModel() {
+GtkTreeModel *MainWindow::CreatePallistModel()
+{
   GtkListStore *model;
 
   model = gtk_list_store_new(7, GDK_TYPE_PIXBUF, G_TYPE_STRING, G_TYPE_STRING,
@@ -728,7 +775,8 @@ GtkTreeModel *MainWindow::CreatePallistModel() {
  * @param model paltree-model
  * @return 好友树
  */
-GtkWidget *MainWindow::CreatePaltreeTree(GtkTreeModel *model) {
+GtkWidget *MainWindow::CreatePaltreeTree(GtkTreeModel *model)
+{
   GtkWidget *view;
   GtkTreeSelection *selection;
   GtkTreeViewColumn *column;
@@ -796,7 +844,8 @@ GtkWidget *MainWindow::CreatePaltreeTree(GtkTreeModel *model) {
  * @param model pallist-model
  * @return 好友清单
  */
-GtkWidget *MainWindow::CreatePallistTree(GtkTreeModel *model) {
+GtkWidget *MainWindow::CreatePallistTree(GtkTreeModel *model)
+{
   GtkWidget *view;
   GtkTreeViewColumn *column;
   GtkCellRenderer *cell;
@@ -862,23 +911,31 @@ GtkWidget *MainWindow::CreatePallistTree(GtkTreeModel *model) {
  * @return 是否查找成功
  */
 bool MainWindow::GroupGetPrevPaltreeItem(GtkTreeModel *model, GtkTreeIter *iter,
-                                         GroupInfo *grpinf) {
+                                         GroupInfo *grpinf)
+{
   GroupInfo *pgrpinf;
   GtkTreeIter parent;
 
-  if (!gtk_tree_model_get_iter_first(model, &parent)) return false;
-  do {
+  if (!gtk_tree_model_get_iter_first(model, &parent))
+    return false;
+  do
+  {
     gtk_tree_model_get(model, &parent, 6, &pgrpinf, -1);
-    if (pgrpinf->grpid == grpinf->grpid) {
+    if (pgrpinf->grpid == grpinf->grpid)
+    {
       *iter = parent;
       break;
     }
-    if (!gtk_tree_model_iter_children(model, iter, &parent)) continue;
-    do {
+    if (!gtk_tree_model_iter_children(model, iter, &parent))
+      continue;
+    do
+    {
       gtk_tree_model_get(model, iter, 6, &pgrpinf, -1);
-      if (pgrpinf->grpid == grpinf->grpid) break;
+      if (pgrpinf->grpid == grpinf->grpid)
+        break;
     } while (gtk_tree_model_iter_next(model, iter));
-    if (pgrpinf->grpid == grpinf->grpid) break;
+    if (pgrpinf->grpid == grpinf->grpid)
+      break;
   } while (gtk_tree_model_iter_next(model, &parent));
 
   return (pgrpinf->grpid == grpinf->grpid);
@@ -892,16 +949,21 @@ bool MainWindow::GroupGetPrevPaltreeItem(GtkTreeModel *model, GtkTreeIter *iter,
  * @return 是否查找成功
  */
 bool MainWindow::GroupGetPaltreeItem(GtkTreeModel *model, GtkTreeIter *iter,
-                                     GroupInfo *grpinf) {
-  if (!gtk_tree_model_get_iter_first(model, iter)) return false;
-  do {
+                                     GroupInfo *grpinf)
+{
+  if (!gtk_tree_model_get_iter_first(model, iter))
+    return false;
+  do
+  {
     GroupInfo *pgrpinf;
     gtk_tree_model_get(model, iter, 6, &pgrpinf, -1);
-    if(pgrpinf == nullptr) {
+    if (pgrpinf == nullptr)
+    {
       LOG_WARN("don't have pgrpinf in this model and iter: %p, %p", model, iter);
       continue;
     }
-    if (pgrpinf->grpid == grpinf->grpid) {
+    if (pgrpinf->grpid == grpinf->grpid)
+    {
       return true;
     }
   } while (gtk_tree_model_iter_next(model, iter));
@@ -917,15 +979,19 @@ bool MainWindow::GroupGetPaltreeItem(GtkTreeModel *model, GtkTreeIter *iter,
  */
 bool MainWindow::GroupGetPaltreeItemWithParent(GtkTreeModel *model,
                                                GtkTreeIter *iter,
-                                               GroupInfo *grpinf) {
+                                               GroupInfo *grpinf)
+{
   GtkTreeIter parent;
   GroupInfo *pgrpinf;
 
   parent = *iter;
-  if (!gtk_tree_model_iter_children(model, iter, &parent)) return false;
-  do {
+  if (!gtk_tree_model_iter_children(model, iter, &parent))
+    return false;
+  do
+  {
     gtk_tree_model_get(model, iter, 6, &pgrpinf, -1);
-    if (pgrpinf->grpid == grpinf->grpid) break;
+    if (pgrpinf->grpid == grpinf->grpid)
+      break;
   } while (gtk_tree_model_iter_next(model, iter));
 
   return (pgrpinf->grpid == grpinf->grpid);
@@ -938,19 +1004,22 @@ bool MainWindow::GroupGetPaltreeItemWithParent(GtkTreeModel *model,
  * @param blinking 是否继续闪烁
  */
 void MainWindow::BlinkGroupItemToPaltree(GtkTreeModel *model, GtkTreeIter *iter,
-                                         bool blinking) {
+                                         bool blinking)
+{
   static GdkColor color1 = {0xff, 0x5252, 0xb8b8, 0x3838},
                   color2 = {0xff, 0x0000, 0x0000, 0xffff};
   GdkColor *color;
 
-  if (blinking) {
+  if (blinking)
+  {
     gtk_tree_model_get(model, iter, 5, &color, -1);
     if ((color->red == color1.red) && (color->green == color1.green) &&
         (color->blue == color1.blue))
       gtk_tree_store_set(GTK_TREE_STORE(model), iter, 5, &color2, -1);
     else
       gtk_tree_store_set(GTK_TREE_STORE(model), iter, 5, &color1, -1);
-  } else
+  }
+  else
     gtk_tree_store_set(GTK_TREE_STORE(model), iter, 5, &color1, -1);
 }
 
@@ -959,7 +1028,8 @@ void MainWindow::BlinkGroupItemToPaltree(GtkTreeModel *model, GtkTreeIter *iter,
  * @param grpinf 好友群组信息
  * @return 菜单
  */
-GtkWidget *MainWindow::CreatePaltreePopupMenu(GroupInfo *grpinf) {
+GtkWidget *MainWindow::CreatePaltreePopupMenu(GroupInfo *grpinf)
+{
   GtkWidget *menu, *menuitem;
 
   menu = gtk_menu_new();
@@ -968,65 +1038,69 @@ GtkWidget *MainWindow::CreatePaltreePopupMenu(GroupInfo *grpinf) {
   NO_OPERATION_C
   menuitem = gtk_menu_item_new_with_label(_("Send Message"));
   gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
-  switch (grpinf->type) {
-    case GROUP_BELONG_TYPE_REGULAR:
-      g_signal_connect_swapped(
-          menuitem, "activate",
-          G_CALLBACK(onPaltreePopupMenuSendMessageActivateRegular), grpinf);
-      break;
-    case GROUP_BELONG_TYPE_SEGMENT:
-    case GROUP_BELONG_TYPE_GROUP:
-    case GROUP_BELONG_TYPE_BROADCAST:
-      g_signal_connect_swapped(
-          menuitem, "activate",
-          G_CALLBACK(onPaltreePopupMenuSendMessageActivateGroup), grpinf);
-      break;
-    default:
-      gtk_widget_set_sensitive(menuitem, FALSE);
-      break;
+  switch (grpinf->type)
+  {
+  case GROUP_BELONG_TYPE_REGULAR:
+    g_signal_connect_swapped(
+        menuitem, "activate",
+        G_CALLBACK(onPaltreePopupMenuSendMessageActivateRegular), grpinf);
+    break;
+  case GROUP_BELONG_TYPE_SEGMENT:
+  case GROUP_BELONG_TYPE_GROUP:
+  case GROUP_BELONG_TYPE_BROADCAST:
+    g_signal_connect_swapped(
+        menuitem, "activate",
+        G_CALLBACK(onPaltreePopupMenuSendMessageActivateGroup), grpinf);
+    break;
+  default:
+    gtk_widget_set_sensitive(menuitem, FALSE);
+    break;
   }
 
   /* 请求共享文件菜单 */
   NO_OPERATION_C
   menuitem = gtk_menu_item_new_with_label(_("Request Shared Resources"));
   gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
-  switch (grpinf->type) {
-    case GROUP_BELONG_TYPE_REGULAR:
-      g_signal_connect_swapped(menuitem, "activate", G_CALLBACK(AskSharedFiles),
-                               grpinf);
-      break;
-    default:
-      gtk_widget_set_sensitive(menuitem, FALSE);
-      break;
+  switch (grpinf->type)
+  {
+  case GROUP_BELONG_TYPE_REGULAR:
+    g_signal_connect_swapped(menuitem, "activate", G_CALLBACK(AskSharedFiles),
+                             grpinf);
+    break;
+  default:
+    gtk_widget_set_sensitive(menuitem, FALSE);
+    break;
   }
 
   /* 改变好友信息数据菜单 */
   NO_OPERATION_C
   menuitem = gtk_menu_item_new_with_label(_("Change Info."));
   gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
-  switch (grpinf->type) {
-    case GROUP_BELONG_TYPE_REGULAR:
-      g_signal_connect_swapped(menuitem, "activate",
-                               G_CALLBACK(RevisePal::ReviseEntry),
-                               grpinf->member->data);
-      break;
-    default:
-      gtk_widget_set_sensitive(menuitem, FALSE);
-      break;
+  switch (grpinf->type)
+  {
+  case GROUP_BELONG_TYPE_REGULAR:
+    g_signal_connect_swapped(menuitem, "activate",
+                             G_CALLBACK(RevisePal::ReviseEntry),
+                             grpinf->member->data);
+    break;
+  default:
+    gtk_widget_set_sensitive(menuitem, FALSE);
+    break;
   }
 
   /* 删除好友项菜单 */
   NO_OPERATION_C
   menuitem = gtk_menu_item_new_with_label(_("Delete Pal"));
   gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
-  switch (grpinf->type) {
-    case GROUP_BELONG_TYPE_REGULAR:
-      g_signal_connect_swapped(menuitem, "activate", G_CALLBACK(DeletePalItem),
-                               grpinf);
-      break;
-    default:
-      gtk_widget_set_sensitive(menuitem, FALSE);
-      break;
+  switch (grpinf->type)
+  {
+  case GROUP_BELONG_TYPE_REGULAR:
+    g_signal_connect_swapped(menuitem, "activate", G_CALLBACK(DeletePalItem),
+                             grpinf);
+    break;
+  default:
+    gtk_widget_set_sensitive(menuitem, FALSE);
+    break;
   }
 
   return menu;
@@ -1036,44 +1110,58 @@ GtkWidget *MainWindow::CreatePaltreePopupMenu(GroupInfo *grpinf) {
  * @param pal class PalInfo
  * @return use g_free to free the return value
  */
-gchar* palInfo2HintMarkup(const PalInfo *pal) {
+gchar *palInfo2HintMarkup(const PalInfo *pal)
+{
   char ipstr[INET_ADDRSTRLEN];
   gchar *version = g_markup_printf_escaped(_("Version: %s"), pal->version);
   gchar *nickname;
-  if (pal->group && *pal->group != '\0') {
+  if (pal->group && *pal->group != '\0')
+  {
     nickname = g_markup_printf_escaped(_("Nickname: %s@%s"), pal->name, pal->group);
-  } else {
+  }
+  else
+  {
     nickname = g_markup_printf_escaped(_("Nickname: %s"), pal->name);
   }
   gchar *user = g_markup_printf_escaped(_("User: %s"), pal->user);
   gchar *host = g_markup_printf_escaped(_("Host: %s"), pal->host);
   gchar *address;
   inet_ntop(AF_INET, &pal->ipv4, ipstr, INET_ADDRSTRLEN);
-  if (pal->segdes && *pal->segdes != '\0') {
+  if (pal->segdes && *pal->segdes != '\0')
+  {
     address = g_markup_printf_escaped(_("Address: %s(%s)"), pal->segdes, ipstr);
-  } else {
+  }
+  else
+  {
     address = g_markup_printf_escaped(_("Address: %s"), ipstr);
   }
   gchar *compatibility;
-  if (!pal->isCompatible()) {
+  if (!pal->isCompatible())
+  {
     compatibility = g_markup_escape_text(_("Compatibility: Microsoft"), -1);
-  } else {
+  }
+  else
+  {
     compatibility = g_markup_escape_text(_("Compatibility: GNU/Linux"), -1);
   }
   gchar *coding = g_markup_printf_escaped(_("System coding: %s"), pal->encode);
   gchar *signature1 = nullptr;
   gchar *signature2 = nullptr;
-  if (pal->sign && *pal->sign != '\0') {
+  if (pal->sign && *pal->sign != '\0')
+  {
     signature1 = g_markup_printf_escaped("%s", _("Signature:"));
     signature2 = g_markup_escape_text(pal->sign, -1);
   }
 
-  gchar* result;
-  if(signature1) {
+  gchar *result;
+  if (signature1)
+  {
     result = g_strdup_printf("%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n<span foreground=\"#00FF00\" font_style=\"italic\" size=\"smaller\">%s</span>",
-                        version, nickname, user, host, address, compatibility, coding,
-                        signature1, signature2);
-  } else {
+                             version, nickname, user, host, address, compatibility, coding,
+                             signature1, signature2);
+  }
+  else
+  {
     result = g_strdup_printf("%s\n%s\n%s\n%s\n%s\n%s\n%s",
                              version, nickname, user, host, address, compatibility, coding);
   }
@@ -1094,8 +1182,9 @@ gchar* palInfo2HintMarkup(const PalInfo *pal) {
  * @param mwin 主窗口类
  * @return Gtk+库所需
  */
-gboolean MainWindow::UpdateUI(MainWindow *mwin) {
-  static uint32_t sumonline = 0;  //避免每次都作一次设置
+gboolean MainWindow::UpdateUI(MainWindow *mwin)
+{
+  static uint32_t sumonline = 0; //避免每次都作一次设置
   GtkWidget *widget;
   char buf[MAX_BUFLEN];
   uint32_t sum;
@@ -1104,15 +1193,18 @@ gboolean MainWindow::UpdateUI(MainWindow *mwin) {
   /* 统计当前在线人数 */
   sum = 0;
   tlist = g_cthrd->GetPalList();
-  while (tlist) {
-    if (((PalInfo *)tlist->data)->isOnline()) {
+  while (tlist)
+  {
+    if (((PalInfo *)tlist->data)->isOnline())
+    {
       sum++;
     }
     tlist = g_slist_next(tlist);
   }
 
   /* 更新UI */
-  if (sumonline != sum) {
+  if (sumonline != sum)
+  {
     snprintf(buf, MAX_BUFLEN, _("Pals Online: %" PRIu32), sum);
     widget =
         GTK_WIDGET(g_datalist_get_data(&mwin->widset, "online-label-widget"));
@@ -1127,7 +1219,8 @@ gboolean MainWindow::UpdateUI(MainWindow *mwin) {
  * 转到上一类结构树.
  * @param mwin 主窗口类
  */
-void MainWindow::GoPrevTreeModel(MainWindow *mwin) {
+void MainWindow::GoPrevTreeModel(MainWindow *mwin)
+{
   GtkWidget *widget;
   GtkTreeModel *model;
   GtkTreeViewColumn *column;
@@ -1136,7 +1229,8 @@ void MainWindow::GoPrevTreeModel(MainWindow *mwin) {
   widget =
       GTK_WIDGET(g_datalist_get_data(&mwin->widset, "paltree-treeview-widget"));
   model = gtk_tree_view_get_model(GTK_TREE_VIEW(widget));
-  if ((tlist = g_list_find(mwin->tmdllist, model))) {
+  if ((tlist = g_list_find(mwin->tmdllist, model)))
+  {
     if (tlist->prev)
       model = GTK_TREE_MODEL(tlist->prev->data);
     else
@@ -1152,7 +1246,8 @@ void MainWindow::GoPrevTreeModel(MainWindow *mwin) {
  * 转到下一类结构树.
  * @param mwin 主窗口类
  */
-void MainWindow::GoNextTreeModel(MainWindow *mwin) {
+void MainWindow::GoNextTreeModel(MainWindow *mwin)
+{
   GtkWidget *widget;
   GtkTreeModel *model;
   GtkTreeViewColumn *column;
@@ -1161,7 +1256,8 @@ void MainWindow::GoNextTreeModel(MainWindow *mwin) {
   widget =
       GTK_WIDGET(g_datalist_get_data(&mwin->widset, "paltree-treeview-widget"));
   model = gtk_tree_view_get_model(GTK_TREE_VIEW(widget));
-  if ((tlist = g_list_find(mwin->tmdllist, model))) {
+  if ((tlist = g_list_find(mwin->tmdllist, model)))
+  {
     if (tlist->next)
       model = GTK_TREE_MODEL(tlist->next->data);
     else
@@ -1177,7 +1273,8 @@ void MainWindow::GoNextTreeModel(MainWindow *mwin) {
  * 更新好友树.
  * @param mwin 主窗口类
  */
-void MainWindow::onRefresh(void*, void*, MainWindow& self) {
+void MainWindow::onRefresh(void *, void *, MainWindow &self)
+{
   auto mwin = &self;
 
   pthread_t pid;
@@ -1191,25 +1288,30 @@ void MainWindow::onRefresh(void*, void*, MainWindow& self) {
   pthread_detach(pid);
 }
 
-void MainWindow::onDetect(void*, void*, MainWindow& self) {
+void MainWindow::onDetect(void *, void *, MainWindow &self)
+{
   DetectPal::DetectEntry(self.window);
 }
 
-
-void MainWindow::onSortBy(GSimpleAction *action, GVariant* value, MainWindow& self) {
+void MainWindow::onSortBy(GSimpleAction *action, GVariant *value, MainWindow &self)
+{
   string sortBy = g_variant_get_string(value, nullptr);
 
   PalTreeModelSortKey key;
 
-  if(sortBy == "nickname") {
+  if (sortBy == "nickname")
+  {
     key = PalTreeModelSortKey::NICKNAME;
-  } else if(sortBy == "ip") {
+  }
+  else if (sortBy == "ip")
+  {
     key = PalTreeModelSortKey::IP;
-  } else {
+  }
+  else
+  {
     LOG_WARN("unknown sort by: %s", sortBy.c_str());
     return;
   }
-
 
   GtkTreeModel *model;
 
@@ -1228,17 +1330,22 @@ void MainWindow::onSortBy(GSimpleAction *action, GVariant* value, MainWindow& se
   g_simple_action_set_state(action, value);
 }
 
-
-void MainWindow::onSortType(GSimpleAction *action, GVariant *value, MainWindow &self) {
+void MainWindow::onSortType(GSimpleAction *action, GVariant *value, MainWindow &self)
+{
   string sortType = g_variant_get_string(value, nullptr);
 
   GtkSortType type;
 
-  if(sortType == "ascending") {
+  if (sortType == "ascending")
+  {
     type = GTK_SORT_ASCENDING;
-  } else if(sortType == "descending") {
+  }
+  else if (sortType == "descending")
+  {
     type = GTK_SORT_DESCENDING;
-  } else {
+  }
+  else
+  {
     LOG_WARN("unknown sorttype: %s", sortType.c_str());
     return;
   }
@@ -1268,7 +1375,8 @@ void MainWindow::onSortType(GSimpleAction *action, GVariant *value, MainWindow &
  * 请求此好友的共享文件.
  * @param grpinf 好友群组信息
  */
-void MainWindow::AskSharedFiles(GroupInfo *grpinf) {
+void MainWindow::AskSharedFiles(GroupInfo *grpinf)
+{
   Command cmd(*g_cthrd);
 
   cmd.SendAskShared(g_cthrd->getUdpSock(), (PalInfo *)grpinf->member->data, 0,
@@ -1279,7 +1387,8 @@ void MainWindow::AskSharedFiles(GroupInfo *grpinf) {
  * 删除好友项.
  * @param grpinf 好友群组信息
  */
-void MainWindow::DeletePalItem(GroupInfo *grpinf) {
+void MainWindow::DeletePalItem(GroupInfo *grpinf)
+{
   PalInfo *pal;
 
   /* 从UI中移除 */
@@ -1288,7 +1397,8 @@ void MainWindow::DeletePalItem(GroupInfo *grpinf) {
 
   g_cthrd->Lock();
   /* 从数据中心点移除 */
-  if ((pal = g_cthrd->GetPalFromList(grpinf->grpid))) {
+  if ((pal = g_cthrd->GetPalFromList(grpinf->grpid)))
+  {
     g_cthrd->DelPalFromList(grpinf->grpid);
     pal->setOnline(false);
   }
@@ -1309,7 +1419,8 @@ void MainWindow::DeletePalItem(GroupInfo *grpinf) {
  */
 gboolean MainWindow::PaltreeQueryTooltip(GtkWidget *treeview, gint x, gint y,
                                          gboolean keyboard_mode, GtkTooltip *tooltip,
-                                         MainWindow *self) {
+                                         MainWindow *self)
+{
   GtkTreePath *path;
   GtkTreeModel *model;
   GtkTreeIter iter;
@@ -1319,7 +1430,8 @@ gboolean MainWindow::PaltreeQueryTooltip(GtkWidget *treeview, gint x, gint y,
   gtk_tree_view_convert_widget_to_bin_window_coords(GTK_TREE_VIEW(treeview), x,
                                                     y, &bx, &by);
   if (keyboard_mode || !gtk_tree_view_get_path_at_pos(GTK_TREE_VIEW(treeview), bx, by,
-                                            &path, NULL, NULL, NULL)) {
+                                                      &path, NULL, NULL, NULL))
+  {
     return FALSE;
   }
 
@@ -1327,9 +1439,10 @@ gboolean MainWindow::PaltreeQueryTooltip(GtkWidget *treeview, gint x, gint y,
   gtk_tree_model_get_iter(model, &iter, path);
   gtk_tree_path_free(path);
   gtk_tree_model_get(model, &iter, 6, &grpinf, -1);
-  if (grpinf->type != GROUP_BELONG_TYPE_REGULAR) return FALSE;
+  if (grpinf->type != GROUP_BELONG_TYPE_REGULAR)
+    return FALSE;
 
-  char* tooltipMarkup = palInfo2HintMarkup((PalInfo *)grpinf->member->data);
+  char *tooltipMarkup = palInfo2HintMarkup((PalInfo *)grpinf->member->data);
   gtk_tooltip_set_markup(tooltip, tooltipMarkup);
   g_free(tooltipMarkup);
 
@@ -1344,7 +1457,8 @@ gboolean MainWindow::PaltreeQueryTooltip(GtkWidget *treeview, gint x, gint y,
  */
 void MainWindow::onPaltreeItemActivated(GtkWidget *treeview, GtkTreePath *path,
                                         GtkTreeViewColumn *column,
-                                        MainWindow *self) {
+                                        MainWindow *self)
+{
   GtkTreeModel *model;
   GtkTreeIter iter;
   GroupInfo *grpinf;
@@ -1354,22 +1468,24 @@ void MainWindow::onPaltreeItemActivated(GtkWidget *treeview, GtkTreePath *path,
   gtk_tree_model_get_iter(model, &iter, path);
   gtk_tree_model_get(model, &iter, 6, &grpinf, -1);
   /* 检查是否需要新建对话框 */
-  if (grpinf->dialog) {
+  if (grpinf->dialog)
+  {
     gtk_window_present(GTK_WINDOW(grpinf->dialog));
     return;
   }
 
   /* 根据需求建立对应的对话框 */
-  switch (grpinf->type) {
-    case GROUP_BELONG_TYPE_REGULAR:
-      DialogPeer::PeerDialogEntry(self, grpinf, self->progdt);
-      break;
-    case GROUP_BELONG_TYPE_SEGMENT:
-    case GROUP_BELONG_TYPE_GROUP:
-    case GROUP_BELONG_TYPE_BROADCAST:
-      DialogGroup::GroupDialogEntry(self, grpinf, self->progdt);
-    default:
-      break;
+  switch (grpinf->type)
+  {
+  case GROUP_BELONG_TYPE_REGULAR:
+    DialogPeer::PeerDialogEntry(self, grpinf, self->progdt);
+    break;
+  case GROUP_BELONG_TYPE_SEGMENT:
+  case GROUP_BELONG_TYPE_GROUP:
+  case GROUP_BELONG_TYPE_BROADCAST:
+    DialogGroup::GroupDialogEntry(self, grpinf, self->progdt);
+  default:
+    break;
   }
 }
 
@@ -1380,7 +1496,8 @@ void MainWindow::onPaltreeItemActivated(GtkWidget *treeview, GtkTreePath *path,
  * @return Gtk+库所需
  */
 gboolean MainWindow::PaltreePopupMenu(GtkWidget *treeview,
-                                      GdkEventButton *event) {
+                                      GdkEventButton *event)
+{
   GtkWidget *menu;
   GtkTreeModel *model;
   GtkTreePath *path;
@@ -1390,7 +1507,8 @@ gboolean MainWindow::PaltreePopupMenu(GtkWidget *treeview,
   /* 检查事件是否可用 */
   if (event->button != GDK_BUTTON_SECONDARY ||
       !gtk_tree_view_get_path_at_pos(GTK_TREE_VIEW(treeview), GINT(event->x),
-                                     GINT(event->y), &path, NULL, NULL, NULL)) {
+                                     GINT(event->y), &path, NULL, NULL, NULL))
+  {
     return FALSE;
   }
 
@@ -1416,7 +1534,8 @@ gboolean MainWindow::PaltreePopupMenu(GtkWidget *treeview,
  * @return Gtk+库所需
  */
 gboolean MainWindow::PaltreeChangeStatus(GtkWidget *treeview,
-                                         GdkEventButton *event) {
+                                         GdkEventButton *event)
+{
   GtkTreeModel *model;
   GtkCellRenderer *cell;
   GtkTreeViewColumn *column;
@@ -1435,7 +1554,8 @@ gboolean MainWindow::PaltreeChangeStatus(GtkWidget *treeview,
   model = gtk_tree_view_get_model(GTK_TREE_VIEW(treeview));
   gtk_tree_model_get_iter(model, &iter, path);
   gtk_tree_model_get(model, &iter, 6, &grpinf, -1);
-  if (grpinf->type == GROUP_BELONG_TYPE_REGULAR) {
+  if (grpinf->type == GROUP_BELONG_TYPE_REGULAR)
+  {
     gtk_tree_path_free(path);
     return FALSE;
   }
@@ -1444,7 +1564,8 @@ gboolean MainWindow::PaltreeChangeStatus(GtkWidget *treeview,
   cell =
       GTK_CELL_RENDERER(g_object_get_data(G_OBJECT(column), "expander-cell"));
   gtk_tree_view_column_cell_get_position(column, cell, &startpos, &width);
-  if ((cellx < startpos) || (cellx > startpos + width)) {
+  if ((cellx < startpos) || (cellx > startpos + width))
+  {
     gtk_tree_path_free(path);
     return FALSE;
   }
@@ -1474,7 +1595,8 @@ void MainWindow::PaltreeDragDataReceived(GtkWidget *treeview,
                                          GdkDragContext *context, gint x,
                                          gint y, GtkSelectionData *data,
                                          guint info, guint time,
-                                         MainWindow *self) {
+                                         MainWindow *self)
+{
   GtkTreeModel *model;
   GtkTreePath *path;
   GtkTreeIter iter;
@@ -1497,24 +1619,27 @@ void MainWindow::PaltreeDragDataReceived(GtkWidget *treeview,
   gtk_tree_model_get(model, &iter, 6, &grpinf, -1);
 
   /* 如果好友群组对话框尚未创建，则先创建对话框 */
-  if (!(grpinf->dialog)) {
-    switch (grpinf->type) {
-      case GROUP_BELONG_TYPE_REGULAR:
-        DialogPeer::PeerDialogEntry(self, grpinf, self->progdt);
-        break;
-      case GROUP_BELONG_TYPE_SEGMENT:
-      case GROUP_BELONG_TYPE_GROUP:
-      case GROUP_BELONG_TYPE_BROADCAST:
-        DialogGroup::GroupDialogEntry(self, grpinf, self->progdt);
-      default:
-        break;
+  if (!(grpinf->dialog))
+  {
+    switch (grpinf->type)
+    {
+    case GROUP_BELONG_TYPE_REGULAR:
+      DialogPeer::PeerDialogEntry(self, grpinf, self->progdt);
+      break;
+    case GROUP_BELONG_TYPE_SEGMENT:
+    case GROUP_BELONG_TYPE_GROUP:
+    case GROUP_BELONG_TYPE_BROADCAST:
+      DialogGroup::GroupDialogEntry(self, grpinf, self->progdt);
+    default:
+      break;
     }
-  } else
+  }
+  else
     gtk_window_present(GTK_WINDOW(grpinf->dialog));
   /* 获取会话对象，并将数据添加到会话对象 */
   session = (SessionAbstract *)g_object_get_data(G_OBJECT(grpinf->dialog),
                                                  "session-class");
-  list = selection_data_get_path(data);  //获取所有文件
+  list = selection_data_get_path(data); //获取所有文件
   session->AttachEnclosure(list);
   g_slist_foreach(list, GFunc(g_free), NULL);
   g_slist_free(list);
@@ -1525,7 +1650,8 @@ void MainWindow::PaltreeDragDataReceived(GtkWidget *treeview,
  * 显示好友清单区域.
  * @param widset widget set
  */
-void MainWindow::onFind(void*, void*, MainWindow&self) {
+void MainWindow::onFind(void *, void *, MainWindow &self)
+{
   GtkWidget *widget;
 
   widget = GTK_WIDGET(g_datalist_get_data(&self.widset, "pallist-box-widget"));
@@ -1535,7 +1661,8 @@ void MainWindow::onFind(void*, void*, MainWindow&self) {
   PallistEntryChanged(widget, &self.widset);
 }
 
-void MainWindow::onAbout(void*, void*, MainWindow&self) {
+void MainWindow::onAbout(void *, void *, MainWindow &self)
+{
   gtk_dialog_run(GTK_DIALOG(HelpDialog::AboutEntry(GTK_WINDOW(self.window))));
 }
 
@@ -1543,7 +1670,8 @@ void MainWindow::onAbout(void*, void*, MainWindow&self) {
  * 隐藏好友清单区域.
  * @param widset widget set
  */
-void MainWindow::HidePallistArea(GData **widset) {
+void MainWindow::HidePallistArea(GData **widset)
+{
   GtkWidget *widget;
   GtkTreeModel *model;
 
@@ -1562,8 +1690,10 @@ void MainWindow::HidePallistArea(GData **widset) {
  * @param event event
  * @return Gtk+库所需
  */
-gboolean MainWindow::ClearPallistEntry(GtkWidget *entry, GdkEventKey *event) {
-  if (event->keyval != GDK_KEY_Escape) return FALSE;
+gboolean MainWindow::ClearPallistEntry(GtkWidget *entry, GdkEventKey *event)
+{
+  if (event->keyval != GDK_KEY_Escape)
+    return FALSE;
   gtk_editable_delete_text(GTK_EDITABLE(entry), 0, -1);
   return TRUE;
 }
@@ -1573,7 +1703,8 @@ gboolean MainWindow::ClearPallistEntry(GtkWidget *entry, GdkEventKey *event) {
  * @param entry entry
  * @param widset widget set
  */
-void MainWindow::PallistEntryChanged(GtkWidget *entry, GData **widset) {
+void MainWindow::PallistEntryChanged(GtkWidget *entry, GData **widset)
+{
   GtkIconTheme *theme;
   GdkPixbuf *pixbuf;
   GtkWidget *treeview;
@@ -1595,14 +1726,16 @@ void MainWindow::PallistEntryChanged(GtkWidget *entry, GData **widset) {
 
   /* 将符合条件的好友加入好友清单 */
   tlist = g_cthrd->GetPalList();
-  while (tlist) {
+  while (tlist)
+  {
     pal = (PalInfo *)tlist->data;
     inet_ntop(AF_INET, &pal->ipv4, ipstr, INET_ADDRSTRLEN);
     /* Search friends case ingore is better. */
     if (*text == '\0' || strcasestr(pal->name, text) ||
         (pal->group && strcasestr(pal->group, text)) ||
         strcasestr(ipstr, text) || strcasestr(pal->user, text) ||
-        strcasestr(pal->host, text)) {
+        strcasestr(pal->host, text))
+    {
       file = iptux_erase_filename_suffix(pal->iconfile);
       pixbuf = gtk_icon_theme_load_icon(theme, file, MAX_ICONSIZE,
                                         GtkIconLookupFlags(0), NULL);
@@ -1611,7 +1744,8 @@ void MainWindow::PallistEntryChanged(GtkWidget *entry, GData **widset) {
       gtk_list_store_set(GTK_LIST_STORE(model), &iter, 0, pixbuf, 1, pal->name,
                          2, pal->group, 3, ipstr, 4, pal->user, 5, pal->host, 6,
                          pal, -1);
-      if (pixbuf) g_object_unref(pixbuf);
+      if (pixbuf)
+        g_object_unref(pixbuf);
     }
     tlist = g_slist_next(tlist);
   }
@@ -1628,7 +1762,8 @@ void MainWindow::PallistEntryChanged(GtkWidget *entry, GData **widset) {
  */
 void MainWindow::PallistItemActivated(GtkWidget *treeview, GtkTreePath *path,
                                       GtkTreeViewColumn *column,
-                                      MainWindow *self) {
+                                      MainWindow *self)
+{
   GtkTreeModel *model;
   GtkTreeIter iter;
   GroupInfo *grpinf;
@@ -1637,7 +1772,8 @@ void MainWindow::PallistItemActivated(GtkWidget *treeview, GtkTreePath *path,
   model = gtk_tree_view_get_model(GTK_TREE_VIEW(treeview));
   gtk_tree_model_get_iter(model, &iter, path);
   gtk_tree_model_get(model, &iter, 6, &pal, -1);
-  if ((grpinf = g_cthrd->GetPalRegularItem(pal))) {
+  if ((grpinf = g_cthrd->GetPalRegularItem(pal)))
+  {
     if (!(grpinf->dialog))
       DialogPeer::PeerDialogEntry(self, grpinf, self->progdt);
     else
@@ -1660,7 +1796,8 @@ void MainWindow::PallistDragDataReceived(GtkWidget *treeview,
                                          GdkDragContext *context, gint x,
                                          gint y, GtkSelectionData *data,
                                          guint info, guint time,
-                                         MainWindow *self) {
+                                         MainWindow *self)
+{
   GtkTreeModel *model;
   GtkTreePath *path;
   GtkTreeIter iter;
@@ -1682,7 +1819,8 @@ void MainWindow::PallistDragDataReceived(GtkWidget *treeview,
   gtk_tree_model_get_iter(model, &iter, path);
   gtk_tree_path_free(path);
   gtk_tree_model_get(model, &iter, 6, &pal, -1);
-  if (!(grpinf = g_cthrd->GetPalRegularItem(pal))) return;
+  if (!(grpinf = g_cthrd->GetPalRegularItem(pal)))
+    return;
 
   /* 如果好友群组对话框尚未创建，则先创建对话框 */
   if (!(grpinf->dialog))
@@ -1692,7 +1830,7 @@ void MainWindow::PallistDragDataReceived(GtkWidget *treeview,
   /* 获取会话对象，并将数据添加到会话对象 */
   session = (SessionAbstract *)g_object_get_data(G_OBJECT(grpinf->dialog),
                                                  "session-class");
-  list = selection_data_get_path(data);  //获取所有文件
+  list = selection_data_get_path(data); //获取所有文件
   session->AttachEnclosure(list);
   g_slist_foreach(list, GFunc(g_free), NULL);
   g_slist_free(list);
@@ -1708,7 +1846,8 @@ void MainWindow::PallistDragDataReceived(GtkWidget *treeview,
  */
 gboolean MainWindow::MWinConfigureEvent(GtkWidget *window,
                                         GdkEventConfigure *event,
-                                        MainWindow *self) {
+                                        MainWindow *self)
+{
   self->windowConfig.SetWidth(event->width)
       .SetHeight(event->height)
       .SaveToConfig(self->config);
@@ -1722,69 +1861,83 @@ gboolean MainWindow::MWinConfigureEvent(GtkWidget *window,
  * @param dtset data set
  */
 void MainWindow::PanedDivideChanged(GtkWidget *paned, GParamSpec *pspec,
-                                    MainWindow *self) {
+                                    MainWindow *self)
+{
   self->config.SetInt("mwin_main_paned_divide",
                       gtk_paned_get_position(GTK_PANED(paned)));
   self->config.Save();
 }
 
-gboolean MainWindow::onDeleteEvent(MainWindow *self) {
+gboolean MainWindow::onDeleteEvent(MainWindow *self)
+{
   return self->statusIcon->AlterInterfaceMode();
 }
 
 void MainWindow::onPaltreePopupMenuSendMessageActivateRegular(
-    GroupInfo *groupInfo) {
+    GroupInfo *groupInfo)
+{
   DialogPeer::PeerDialogEntry(g_mwin, groupInfo, *g_progdt);
 }
 
 void MainWindow::onPaltreePopupMenuSendMessageActivateGroup(
-    GroupInfo *groupInfo) {
+    GroupInfo *groupInfo)
+{
   DialogGroup::GroupDialogEntry(g_mwin, groupInfo, *g_progdt);
 }
 
-void MainWindow::onClearChatHistory(void *, void *, MainWindow &self) {
-  switch(self.activeWindowType) {
-    case ActiveWindowType::PEER:
-      ((DialogPeer*)self.activeWindow)->ClearHistoryTextView();
-      break;
-    case ActiveWindowType::GROUP:
-      ((DialogGroup*)self.activeWindow)->ClearHistoryTextView();
-      break;
-    default:
-      LOG_WARN("ClearChatHistory should be disabled for %d", self.activeWindowType);
+void MainWindow::onClearChatHistory(void *, void *, MainWindow &self)
+{
+  switch (self.activeWindowType)
+  {
+  case ActiveWindowType::PEER:
+    ((DialogPeer *)self.activeWindow)->ClearHistoryTextView();
+    break;
+  case ActiveWindowType::GROUP:
+    ((DialogGroup *)self.activeWindow)->ClearHistoryTextView();
+    break;
+  default:
+    LOG_WARN("ClearChatHistory should be disabled for %d", self.activeWindowType);
   }
 }
 
-void MainWindow::onInsertPicture(void *, void *, MainWindow &self) {
-  switch(self.activeWindowType) {
-    case ActiveWindowType::PEER:
-      ((DialogPeer*)self.activeWindow)->insertPicture();
-      break;
-    default:
-      LOG_WARN("InsertPicture should be disabled for %d", self.activeWindowType);
+void MainWindow::onInsertPicture(void *, void *, MainWindow &self)
+{
+  switch (self.activeWindowType)
+  {
+  case ActiveWindowType::PEER:
+    ((DialogPeer *)self.activeWindow)->insertPicture();
+    break;
+  default:
+    LOG_WARN("InsertPicture should be disabled for %d", self.activeWindowType);
   }
 }
 
-void MainWindow::onActive(MainWindow& self) {
-  if(!gtk_window_is_active(GTK_WINDOW(self.window))) {
+void MainWindow::onActive(MainWindow &self)
+{
+  if (!gtk_window_is_active(GTK_WINDOW(self.window)))
+  {
     return;
   }
   //self.setActiveWindow(ActiveWindowType::MAIN, &self);
 }
 
-void MainWindow::setActiveWindow(ActiveWindowType t, void* activeWindow) {
+void MainWindow::setActiveWindow(ActiveWindowType t, void *activeWindow)
+{
   this->activeWindowType = t;
   this->activeWindow = activeWindow;
 }
 
-void MainWindow::clearActiveWindow(void* activeWindow) {
-  if(this->activeWindow == activeWindow) {
+void MainWindow::clearActiveWindow(void *activeWindow)
+{
+  if (this->activeWindow == activeWindow)
+  {
     this->activeWindowType = ActiveWindowType ::OTHERS;
     this->activeWindow = nullptr;
   }
 }
 
-void MainWindow::InitThemeSublayerData() {
+void MainWindow::InitThemeSublayerData()
+{
   GtkIconTheme *theme;
   GtkIconFactory *factory;
   GtkIconSet *set;
@@ -1799,13 +1952,15 @@ void MainWindow::InitThemeSublayerData() {
   factory = gtk_icon_factory_new();
   gtk_icon_factory_add_default(factory);
   if ((pixbuf = gtk_icon_theme_load_icon(theme, "iptux", 64,
-                                         GtkIconLookupFlags(0), NULL))) {
+                                         GtkIconLookupFlags(0), NULL)))
+  {
     set = gtk_icon_set_new_from_pixbuf(pixbuf);
     gtk_icon_factory_add(factory, "iptux-logo-show", set);
     g_object_unref(pixbuf);
   }
   if ((pixbuf = gtk_icon_theme_load_icon(theme, "iptux-i", 64,
-                                         GtkIconLookupFlags(0), NULL))) {
+                                         GtkIconLookupFlags(0), NULL)))
+  {
     set = gtk_icon_set_new_from_pixbuf(pixbuf);
     gtk_icon_factory_add(factory, "iptux-logo-hide", set);
     g_object_unref(pixbuf);
@@ -1813,78 +1968,91 @@ void MainWindow::InitThemeSublayerData() {
   g_object_unref(factory);
 }
 
-class EventData {
+class EventData
+{
 public:
-  EventData(MainWindow* window, const Event& event) {
+  EventData(MainWindow *window, const Event &event)
+  {
     this->window = window;
     this->event = event.clone();
   }
 
-  ~EventData() {
+  ~EventData()
+  {
     delete this->event;
   }
 
-  MainWindow* window;
-  Event* event;
+  MainWindow *window;
+  Event *event;
 };
 
-gboolean MainWindow::processEventCallback(gpointer data) {
-  EventData* callback = (EventData*)data;
+gboolean MainWindow::processEventCallback(gpointer data)
+{
+  EventData *callback = (EventData *)data;
   callback->window->processEventInMainThread(callback->event);
   delete callback;
   return G_SOURCE_REMOVE;
 }
 
-
 // this function is run in corethread, so always use g_idle_add to update the ui
-void MainWindow::processEvent(const Event& event) {
+void MainWindow::processEvent(const Event &event)
+{
   // deleted in `processEventCallback`
-  EventData* callback = new EventData(this, event);
+  EventData *callback = new EventData(this, event);
   gdk_threads_add_idle(processEventCallback, callback);
 }
 
-void MainWindow::processEventInMainThread(Event* _event) {
+void MainWindow::processEventInMainThread(Event *_event)
+{
   EventType type = _event->getType();
-  if(type == EventType ::NEW_PAL_ONLINE) {
-    auto event = (NewPalOnlineEvent*)_event;
+  if (type == EventType ::NEW_PAL_ONLINE)
+  {
+    auto event = (NewPalOnlineEvent *)_event;
     auto ipv4 = event->getPalInfo()->ipv4;
-    if(PaltreeContainItem(ipv4)) {
+    if (PaltreeContainItem(ipv4))
+    {
       UpdateItemToPaltree(ipv4);
-    } else {
+    }
+    else
+    {
       AttachItemToPaltree(ipv4);
     }
     return;
   }
-  if(type == EventType::NEW_MESSAGE) {
-    auto event = (NewMessageEvent*)_event;
+  if (type == EventType::NEW_MESSAGE)
+  {
+    auto event = (NewMessageEvent *)_event;
     auto para = event->getMsgPara();
     GroupInfo *grpinf = nullptr;
     SessionAbstract *session;
 
     /* 获取群组信息 */
-    switch (para.btype) {
-      case GROUP_BELONG_TYPE_REGULAR:
-        grpinf = coreThread.GetPalRegularItem(para.pal);
-        break;
-      case GROUP_BELONG_TYPE_SEGMENT:
-        grpinf = coreThread.GetPalSegmentItem(para.pal);
-        break;
-      case GROUP_BELONG_TYPE_GROUP:
-        grpinf = coreThread.GetPalGroupItem(para.pal);
-        break;
-      case GROUP_BELONG_TYPE_BROADCAST:
-        grpinf = coreThread.GetPalBroadcastItem(para.pal);
-        break;
-      default:
-        grpinf = nullptr;
-        break;
+    switch (para.btype)
+    {
+    case GROUP_BELONG_TYPE_REGULAR:
+      grpinf = coreThread.GetPalRegularItem(para.pal);
+      break;
+    case GROUP_BELONG_TYPE_SEGMENT:
+      grpinf = coreThread.GetPalSegmentItem(para.pal);
+      break;
+    case GROUP_BELONG_TYPE_GROUP:
+      grpinf = coreThread.GetPalGroupItem(para.pal);
+      break;
+    case GROUP_BELONG_TYPE_BROADCAST:
+      grpinf = coreThread.GetPalBroadcastItem(para.pal);
+      break;
+    default:
+      grpinf = nullptr;
+      break;
     }
 
     /* 如果群组存在则插入消息 */
     /* 群组不存在是编程上的错误，请发送Bug报告 */
-    if (grpinf) {
+    if (grpinf)
+    {
       coreThread.InsertMsgToGroupInfoItem(grpinf, &para);
-      if (grpinf->dialog) {
+      if (grpinf->dialog)
+      {
         session = (SessionAbstract *)g_object_get_data(G_OBJECT(grpinf->dialog),
                                                        "session-class");
         session->OnNewMessageComing();
@@ -1896,4 +2064,4 @@ void MainWindow::processEventInMainThread(Event* _event) {
   LOG_WARN("unknown event type: %d", type);
 }
 
-}  // namespace iptux
+} // namespace iptux
