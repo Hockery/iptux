@@ -10,7 +10,8 @@
 
 using namespace std;
 
-namespace iptux {
+namespace iptux
+{
 
 /**
  * 文件传输树(trans-tree)底层数据结构.
@@ -23,7 +24,8 @@ namespace iptux {
  *
  * @return trans-model
  */
-TransModel* transModelNew() {
+TransModel *transModelNew()
+{
   GtkListStore *model;
 
   model = gtk_list_store_new(int(TransModelColumn::N_COLUMNS),
@@ -36,7 +38,8 @@ TransModel* transModelNew() {
   return GTK_TREE_MODEL(model);
 }
 
-void transModelFillFromTransFileModel(TransModel* model, GtkTreeIter* iter, const TransFileModel& para) {
+void transModelFillFromTransFileModel(TransModel *model, GtkTreeIter *iter, const TransFileModel &para)
+{
   gtk_list_store_set(
       GTK_LIST_STORE(model), iter,
       TransModelColumn::STATUS, para.getStatus().c_str(),
@@ -57,8 +60,6 @@ void transModelFillFromTransFileModel(TransModel* model, GtkTreeIter* iter, cons
       -1);
 }
 
-
-
 /**
  * 好友树(paltree)按昵称排序的比较函数.
  * @param model paltree-model
@@ -67,7 +68,8 @@ void transModelFillFromTransFileModel(TransModel* model, GtkTreeIter* iter, cons
  * @return 比较值
  */
 gint paltreeCompareByNameFunc(GtkTreeModel *model, GtkTreeIter *a,
-                              GtkTreeIter *b) {
+                              GtkTreeIter *b)
+{
   GroupInfo *agrpinf, *bgrpinf;
   gint result;
 
@@ -86,7 +88,8 @@ gint paltreeCompareByNameFunc(GtkTreeModel *model, GtkTreeIter *a,
  * @return 比较值
  */
 gint paltreeCompareByIPFunc(GtkTreeModel *model, GtkTreeIter *a,
-                                        GtkTreeIter *b) {
+                            GtkTreeIter *b)
+{
   GroupInfo *agrpinf, *bgrpinf;
   gint result;
 
@@ -101,15 +104,14 @@ gint paltreeCompareByIPFunc(GtkTreeModel *model, GtkTreeIter *a,
   return result;
 }
 
-
-
 /**
  * 好友树(paltree)底层数据结构.
  * 7,0 closed-expander,1 open-expander,2 info.,3 extras,4 style,5 color,6 data
  * \n 关闭的展开器;打开的展开器;群组信息;扩展信息;字体风格;字体颜色;群组数据 \n
  * @return paltree-model
  */
-PalTreeModel * palTreeModelNew() {
+PalTreeModel *palTreeModelNew()
+{
   GtkTreeStore *model;
 
   model = gtk_tree_store_new(int(PalTreeModelColumn::N_COLUMNS),
@@ -124,18 +126,20 @@ PalTreeModel * palTreeModelNew() {
   return GTK_TREE_MODEL(model);
 }
 
-void palTreeModelSetSortKey(PalTreeModel *model, PalTreeModelSortKey key) {
-  switch(key) {
-    case PalTreeModelSortKey::NICKNAME:
-      gtk_tree_sortable_set_default_sort_func(GTK_TREE_SORTABLE(model), GtkTreeIterCompareFunc(paltreeCompareByNameFunc), NULL,
-                                              NULL);
-      break;
-    case PalTreeModelSortKey::IP:
-      gtk_tree_sortable_set_default_sort_func(GTK_TREE_SORTABLE(model), GtkTreeIterCompareFunc(paltreeCompareByIPFunc), NULL,
-                                              NULL);
-      break;
-    default:
-      LOG_WARN("unknown PalTreeModelSortKey: %d", key);
+void palTreeModelSetSortKey(PalTreeModel *model, PalTreeModelSortKey key)
+{
+  switch (key)
+  {
+  case PalTreeModelSortKey::NICKNAME:
+    gtk_tree_sortable_set_default_sort_func(GTK_TREE_SORTABLE(model), GtkTreeIterCompareFunc(paltreeCompareByNameFunc), NULL,
+                                            NULL);
+    break;
+  case PalTreeModelSortKey::IP:
+    gtk_tree_sortable_set_default_sort_func(GTK_TREE_SORTABLE(model), GtkTreeIterCompareFunc(paltreeCompareByIPFunc), NULL,
+                                            NULL);
+    break;
+  default:
+    LOG_WARN("unknown PalTreeModelSortKey: %d", key);
   }
 }
 
@@ -148,7 +152,8 @@ void palTreeModelSetSortKey(PalTreeModel *model, PalTreeModelSortKey key) {
 void groupInfo2PalTreeModel(GroupInfo *grpinf,
                             PalTreeModel *model,
                             GtkTreeIter *iter,
-                            const char* font) {
+                            const char *font)
+{
   palTreeModelFillFromGroupInfo(model, iter, grpinf, font);
 }
 
@@ -163,31 +168,39 @@ static const GdkColor color = {0xff, 0x5252, 0xb8b8, 0x3838};
 void palTreeModelFillFromGroupInfo(GtkTreeModel *model,
                                    GtkTreeIter *iter,
                                    const GroupInfo *grpinf,
-                                   const char* font) {
+                                   const char *font)
+{
   GtkIconTheme *theme;
-  GdkPixbuf *cpixbuf, *opixbuf= nullptr;
+  GdkPixbuf *cpixbuf, *opixbuf = nullptr;
   PangoAttrList *attrs;
   PangoAttribute *attr;
   gchar *info, *extra;
   PalInfo *pal;
-  GError* error = nullptr;
+  GError *error = nullptr;
 
   /* 创建图标 */
   theme = gtk_icon_theme_get_default();
-  if (grpinf->type == GROUP_BELONG_TYPE_REGULAR) {
+  if (grpinf->type == GROUP_BELONG_TYPE_REGULAR)
+  {
     pal = static_cast<PalInfo *>(grpinf->member->data);
     auto file = iptux_erase_filename_suffix(pal->iconfile);
+    // printf("add file to group: %s\n", file);
     cpixbuf = gtk_icon_theme_load_icon(theme, file, MAX_ICONSIZE,
                                        GtkIconLookupFlags(0), &error);
-    if(cpixbuf == nullptr) {
+    if (cpixbuf == nullptr)
+    {
       LOG_WARN("gtk_icon_theme_load_icon failed: [%d] %s", error->code, error->message);
       g_error_free(error);
       error = nullptr;
-    } else {
+    }
+    else
+    {
       opixbuf = GDK_PIXBUF(g_object_ref(cpixbuf));
     }
     g_free(file);
-  } else {
+  }
+  else
+  {
     cpixbuf = gtk_icon_theme_load_icon(theme, "tip-hide", MAX_ICONSIZE,
                                        GtkIconLookupFlags(0), NULL);
     opixbuf = gtk_icon_theme_load_icon(theme, "tip-show", MAX_ICONSIZE,
@@ -195,12 +208,14 @@ void palTreeModelFillFromGroupInfo(GtkTreeModel *model,
   }
 
   /* 创建主信息 */
-  if (grpinf->type == GROUP_BELONG_TYPE_REGULAR) {
+  if (grpinf->type == GROUP_BELONG_TYPE_REGULAR)
+  {
     char ipstr[INET_ADDRSTRLEN];
     pal = static_cast<PalInfo *>(grpinf->member->data);
     inet_ntop(AF_INET, &pal->ipv4, ipstr, INET_ADDRSTRLEN);
     info = g_strdup_printf("%s\n%s", pal->name, ipstr);
-  } else
+  }
+  else
     info = g_strdup(grpinf->name);
 
   /* 创建扩展信息 */
@@ -211,12 +226,15 @@ void palTreeModelFillFromGroupInfo(GtkTreeModel *model,
 
   /* 创建字体风格 */
   attrs = pango_attr_list_new();
-  if (grpinf->type == GROUP_BELONG_TYPE_REGULAR) {
+  if (grpinf->type == GROUP_BELONG_TYPE_REGULAR)
+  {
     auto dspt = pango_font_description_from_string(font);
     attr = pango_attr_font_desc_new(dspt);
     pango_attr_list_insert(attrs, attr);
     pango_font_description_free(dspt);
-  } else {
+  }
+  else
+  {
     attr = pango_attr_size_new(8192);
     pango_attr_list_insert(attrs, attr);
     attr = pango_attr_style_new(PANGO_STYLE_ITALIC);
@@ -237,8 +255,10 @@ void palTreeModelFillFromGroupInfo(GtkTreeModel *model,
                      -1);
 
   /* 释放资源 */
-  if (cpixbuf) g_object_unref(cpixbuf);
-  if (opixbuf) g_object_unref(opixbuf);
+  if (cpixbuf)
+    g_object_unref(cpixbuf);
+  if (opixbuf)
+    g_object_unref(opixbuf);
   g_free(info);
   g_free(extra);
   pango_attr_list_unref(attrs);
@@ -251,11 +271,11 @@ GroupInfo::GroupInfo()
       member(NULL),
       buffer(NULL),
       dialog(NULL) {}
-GroupInfo::~GroupInfo() {
+GroupInfo::~GroupInfo()
+{
   g_free(name);
   g_slist_free(member);
   g_object_unref(buffer);
 }
 
-
-}
+} // namespace iptux

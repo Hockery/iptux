@@ -3,6 +3,7 @@
 
 #include <cstring>
 #include <cerrno>
+#include <iostream>
 
 #include <unistd.h>
 #include <sys/socket.h>
@@ -15,7 +16,8 @@
 
 using namespace std;
 
-namespace iptux {
+namespace iptux
+{
 
 /**
  * 绑定iptux程序的服务监听端口.
@@ -24,7 +26,8 @@ namespace iptux {
 /**
  * 程序必要初始化.
  */
-void iptux_init() {
+void iptux_init()
+{
   init_iptux_environment();
 
   g_sndsys->InitSublayer();
@@ -33,22 +36,23 @@ void iptux_init() {
   g_cthrd->SystemLog("%s", _("Loading the process successfully!"));
 }
 
-
 bool ValidateDragData(GtkSelectionData *data, GdkDragContext *context,
-                      guint time) {
+                      guint time)
+{
   if (gtk_selection_data_get_length(data) <= 0 ||
-      gtk_selection_data_get_format(data) != 8) {
+      gtk_selection_data_get_format(data) != 8)
+  {
     gtk_drag_finish(context, FALSE, FALSE, time);
     return false;
   }
   return true;
 }
 
-void add_accelerator(GtkApplication *app, const char *action, const char *accel) {
+void add_accelerator(GtkApplication *app, const char *action, const char *accel)
+{
   const char *accels[] = {
       accel,
-      NULL
-  };
+      NULL};
   gtk_application_set_accels_for_action(app, action, accels);
 }
 
@@ -59,7 +63,8 @@ void add_accelerator(GtkApplication *app, const char *action, const char *accel)
  * @param height height
  * @note 原pixbuf将被本函数释放
  */
-void pixbuf_shrink_scale_1(GdkPixbuf **pixbuf, int width, int height) {
+void pixbuf_shrink_scale_1(GdkPixbuf **pixbuf, int width, int height)
+{
   gdouble scale_x, scale_y, scale;
   gint _width, _height;
 
@@ -67,11 +72,12 @@ void pixbuf_shrink_scale_1(GdkPixbuf **pixbuf, int width, int height) {
   height = (height != -1) ? height : G_MAXINT;
   _width = gdk_pixbuf_get_width(*pixbuf);
   _height = gdk_pixbuf_get_height(*pixbuf);
-  if (_width > width || _height > height) {
+  if (_width > width || _height > height)
+  {
     scale = ((scale_x = (gdouble)width / _width) <
-        (scale_y = (gdouble)height / _height))
-            ? scale_x
-            : scale_y;
+             (scale_y = (gdouble)height / _height))
+                ? scale_x
+                : scale_y;
     _width = (gint)(_width * scale);
     _height = (gint)(_height * scale);
     auto tpixbuf = *pixbuf;
@@ -85,7 +91,8 @@ void pixbuf_shrink_scale_1(GdkPixbuf **pixbuf, int width, int height) {
  * 让窗体(widget)支持uri拖拽操作.
  * @param widget widget
  */
-void widget_enable_dnd_uri(GtkWidget *widget) {
+void widget_enable_dnd_uri(GtkWidget *widget)
+{
   static const GtkTargetEntry target = {(gchar *)"text/uri-list", 0, 0};
 
   gtk_drag_dest_set(widget, GTK_DEST_DEFAULT_ALL, &target, 1, GDK_ACTION_MOVE);
@@ -96,17 +103,22 @@ void widget_enable_dnd_uri(GtkWidget *widget) {
  * @param data selection data
  * @return 文件链表
  */
-GSList *selection_data_get_path(GtkSelectionData *data) {
+GSList *selection_data_get_path(GtkSelectionData *data)
+{
   const char *prl = "file://";
   gchar **uris, **ptr;
   GSList *filelist;
-
-  if (!(uris = gtk_selection_data_get_uris(data))) return NULL;
-
+  if (!(uris = gtk_selection_data_get_uris(data)))
+  {
+    // printf("selection_data_get_path: Return NULL! \nbecause gtk_selection_data_get_uris is null \n ");
+    return NULL;
+  }
   filelist = NULL;
   ptr = uris;
-  while (*ptr) {
+  while (*ptr)
+  {
     auto uri = g_uri_unescape_string(*ptr, NULL);
+    std::cout << uri << std::endl;
     if (strncasecmp(uri, prl, strlen(prl)) == 0)
       filelist = g_slist_append(filelist, g_strdup(uri + strlen(prl)));
     else
@@ -125,7 +137,8 @@ GSList *selection_data_get_path(GtkSelectionData *data) {
  * @param format as in printf()
  * @param ...
  */
-void pop_info(GtkWidget *parent, const gchar *format, ...) {
+void pop_info(GtkWidget *parent, const gchar *format, ...)
+{
   GtkWidget *dialog;
   gchar *msg;
   va_list ap;
@@ -148,7 +161,8 @@ void pop_info(GtkWidget *parent, const gchar *format, ...) {
  * @param format as in printf()
  * @param ...
  */
-void pop_warning(GtkWidget *parent, const gchar *format, ...) {
+void pop_warning(GtkWidget *parent, const gchar *format, ...)
+{
   GtkWidget *dialog;
   gchar *msg;
   va_list ap;
@@ -170,7 +184,8 @@ void pop_warning(GtkWidget *parent, const gchar *format, ...) {
  * @param format as in printf()
  * @param ...
  */
-void pop_error(const gchar *format, ...) {
+void pop_error(const gchar *format, ...)
+{
   GtkWidget *dialog;
   gchar *msg;
   va_list ap;
@@ -187,4 +202,4 @@ void pop_error(const gchar *format, ...) {
   gtk_widget_destroy(dialog);
 }
 
-}
+} // namespace iptux
